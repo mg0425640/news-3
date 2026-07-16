@@ -69,6 +69,7 @@ export default function DreamsPage() {
     loadingText: isHi ? 'सपनों की व्याख्याएं लोड हो रही हैं...' : 'Loading dream interpretations...',
     minRead: isHi ? 'मिनट' : 'min',
     promotedTitle: isHi ? 'प्रमोटेड लेख' : 'Promoted Articles',
+    sponsor: isHi ? 'प्रायोजित' : 'Sponsored',
   };
 
   // Fetch articles and Database Ads from Supabase
@@ -110,14 +111,24 @@ export default function DreamsPage() {
     fetchData();
   }, [sortBy]);
 
-  // Auto-rotate DB Ads every 8 seconds
-  useEffect(() => {
-    if (dbAds.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentAdIndex((prev) => (prev + 1) % dbAds.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [dbAds]);
+    // Sub-component to cleanly render unique Database Ads without interval rotation
+  const RenderDbAdLayout = ({ ad }: { ad?: AdItem }) => {
+    if (!ad) return null;
+    return (
+      <div className="mb-10 p-3 bg-[#F8F8F8] border border-[#E8E8E8] text-center">
+        <a href={ad.target_url} target="_blank" rel="noopener noreferrer" className="block relative">
+          <span className="absolute top-2 right-2 bg-black/60 text-white text-[9px] uppercase px-1.5 py-0.5 font-body">
+            {t.sponsor}
+          </span>
+          <img
+            src={ad.image_url}
+            alt={ad.title || 'Sponsored Advertisement'}
+            className="w-full max-h-36 object-cover mx-auto"
+          />
+        </a>
+      </div>
+    );
+  };
 
   // Client-side filtering
   const filtered = useMemo(() => {
@@ -173,7 +184,7 @@ export default function DreamsPage() {
       <div className="bg-[#111] text-white py-10">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <span className="tag-pill mb-3 inline-block">{t.badge}</span>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
+          <h1 className="font-display text-white text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
           <p className="text-[#AAA] font-body max-w-2xl mx-auto">{t.pageDesc}</p>
         </div>
       </div>
@@ -311,7 +322,7 @@ export default function DreamsPage() {
                   <div className="mb-10 p-3 bg-[#F8F8F8] border border-[#E8E8E8] text-center">
                     <a href={activeAd.target_url} target="_blank" rel="noopener noreferrer" className="block relative">
                       <span className="absolute top-2 right-2 bg-black/60 text-white text-[9px] uppercase px-1.5 py-0.5 font-body">
-                        Sponsor
+                        {t.sponsor}
                       </span>
                       <img
                         src={activeAd.image_url}
@@ -322,10 +333,13 @@ export default function DreamsPage() {
                   </div>
                 )}
 
+                {/* 2. DATABASE AD WIDGET 1 (Displays DB Ad Array Index 0) */}
+                <RenderDbAdLayout ad={dbAds[1]} />
+
                 {/* 3. SECTION: 4 Square Posts */}
                 {fourSquarePosts1.length > 0 && (
                   <div className="mb-10 pb-8 border-b border-[#E8E8E8]">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
                       {fourSquarePosts1.map((post) => (
                         <Link key={post.id} href={`/dreams/${post.slug}${isHi ? '?lang=hi' : ''}`} className="group block">
                           <div className="aspect-square overflow-hidden mb-2 relative">
@@ -338,6 +352,12 @@ export default function DreamsPage() {
                           <h3 className="text-xs font-semibold font-body text-[#111] group-hover:text-brand line-clamp-2">
                             {isHi && post.title_hi ? post.title_hi : post.title}
                           </h3>
+                          <span className="text-[10px] text-[#999] flex items-center gap-1 mt-1 font-body">
+                            <Clock size={10} /> {post.read_time || 5} {t.minRead}
+                          </span>
+                          <p className="text-sm text-[#666] font-body line-clamp-3 mt-2">
+                            {isHi && post.excerpt_hi ? post.excerpt_hi : post.excerpt}
+                          </p>
                         </Link>
                       ))}
                     </div>

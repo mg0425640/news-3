@@ -68,28 +68,41 @@ export default function SearchPage() {
     setLoading(true);
     try {
       const searchTerm = `%${searchQuery.toLowerCase()}%`;
+      const selectCols = 'id,slug,title,title_hi,excerpt,excerpt_hi,image_url,category,subcategory,author,published_at,read_count,like_count,share_count';
 
-      // Search articles
-      let articleQuery = supabase
+      // Text-match query and tag-match query run in parallel, then merge & dedupe
+      const textMatchQuery = supabase
         .from('articles')
-        .select('id,slug,title,title_hi,excerpt,excerpt_hi,image_url,category,subcategory,author,published_at,read_count,like_count,share_count', { count: 'exact' })
+        .select(selectCols)
         .eq('is_published', true)
-        .or(`title.ilike.${searchTerm},excerpt.ilike.${searchTerm},category.ilike.${searchTerm},subcategory.ilike.${searchTerm},tags.cs.["${searchQuery}"]`)
+        .or(`title.ilike.${searchTerm},excerpt.ilike.${searchTerm},category.ilike.${searchTerm},subcategory.ilike.${searchTerm}`)
+        .order('read_count', { ascending: false })
+        .limit(20);
+
+      const tagMatchQuery = supabase
+        .from('articles')
+        .select(selectCols)
+        .eq('is_published', true)
+        .contains('tags', [searchQuery.toLowerCase()])
         .order('read_count', { ascending: false })
         .limit(20);
 
       // Search products
-      let productQuery = supabase
+      const productQuery = supabase
         .from('products')
         .select('id,slug,name,price,original_price,image_url,category,rating,review_count,badge,discount,in_stock')
         .or(`name.ilike.${searchTerm},description.ilike.${searchTerm},category.ilike.${searchTerm}`)
         .limit(10);
 
-      const [articleRes, productRes] = await Promise.all([articleQuery, productQuery]);
+      const [textRes, tagRes, productRes] = await Promise.all([textMatchQuery, tagMatchQuery, productQuery]);
 
-      if (articleRes.data) {
-        setArticles(articleRes.data as DbArticle[]);
-      }
+      // Merge text and tag results, deduping by id
+      const articleMap = new Map<string, DbArticle>();
+      for (const a of (textRes.data as DbArticle[]) || []) articleMap.set(a.id, a);
+      for (const a of (tagRes.data as DbArticle[]) || []) if (!articleMap.has(a.id)) articleMap.set(a.id, a);
+      const mergedArticles = Array.from(articleMap.values()).sort((a, b) => b.read_count - a.read_count).slice(0, 20);
+
+      setArticles(mergedArticles);
 
       if (productRes.data) {
         setProducts(productRes.data.map(p => ({
@@ -109,7 +122,7 @@ export default function SearchPage() {
         })));
       }
 
-      setTotalResults((articleRes.count || 0) + (productRes.data?.length || 0));
+      setTotalResults(mergedArticles.length + (productRes.data?.length || 0));
     } catch (e) {
       console.error('Search error:', e);
     }

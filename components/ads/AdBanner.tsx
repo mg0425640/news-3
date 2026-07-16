@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/context/LanguageContext';
 
 type AdSlot = 'banner-1' | 'banner-2' | 'banner-3' | 'side-image-1' | 'side-image-2' | 'side-image-3' | 'leaderboard' | 'rectangle' | 'global' | string;
+type AdType = 'banner' | 'in_feed' | 'sidebar' | 'sticky';
+type AdPosition = 'content' | 'top' | 'sidebar' | 'bottom';
+type AdSize = 'leaderboard' | 'rectangle' | 'banner' | 'sidebar' | 'sticky' | 'large_rectangle';
 
 interface CategoryAd {
   id: string;
@@ -16,6 +19,10 @@ interface CategoryAd {
   image_url: string;
   link_url: string | null;
   click_count: number;
+  view_count: number;
+  ad_type: AdType;
+  position: AdPosition;
+  size: AdSize;
 }
 
 interface AdBannerProps {
@@ -24,10 +31,11 @@ interface AdBannerProps {
   subcategory?: string;
   isGlobal?: boolean;
   className?: string;
-  // Legacy Google AdSense props
+  adType?: AdType;
+  position?: AdPosition;
+  size?: AdSize;
   googleSlot?: string;
   showGoogleFallback?: boolean;
-  size?: 'leaderboard' | 'rectangle' | 'banner' | 'sidebar'; // Legacy, ignored
 }
 
 const categoryTargetMap: Record<string, string> = {
@@ -42,8 +50,17 @@ const categoryTargetMap: Record<string, string> = {
   blog: 'target_blog',
 };
 
-const isSidebar = (slot: AdSlot) => slot.startsWith('side-image');
-const isBanner = (slot: AdSlot) => slot.startsWith('banner') || slot === 'leaderboard';
+const isSidebar = (slot: AdSlot, adType?: AdType) => adType === 'sidebar' || slot.startsWith('side-image');
+const isBanner = (slot: AdSlot, adType?: AdType) => adType === 'banner' || slot.startsWith('banner') || slot === 'leaderboard';
+
+const sizeDimensions: Record<AdSize, { w: string; h: string }> = {
+  leaderboard: { w: 'w-full', h: 'h-[90px]' },
+  rectangle: { w: 'w-full', h: 'h-[250px]' },
+  banner: { w: 'w-full', h: 'h-[90px]' },
+  sidebar: { w: 'w-[300px]', h: 'h-[250px]' },
+  sticky: { w: 'w-full', h: 'h-[50px]' },
+  large_rectangle: { w: 'w-full', h: 'h-[280px]' },
+};
 
 export default function AdBanner({
   slot = 'banner-1',
@@ -51,9 +68,11 @@ export default function AdBanner({
   subcategory,
   isGlobal = false,
   className = '',
+  adType,
+  position,
+  size,
   googleSlot,
   showGoogleFallback = false,
-  size, // Legacy prop, ignored
 }: AdBannerProps) {
   const { lang } = useLanguage();
   const [ads, setAds] = useState<CategoryAd[]>([]);
@@ -61,26 +80,24 @@ export default function AdBanner({
 
   useEffect(() => {
     loadAds();
-  }, [slot, category, subcategory, isGlobal]);
+  }, [slot, category, subcategory, isGlobal, adType, position, size]);
 
   const loadAds = async () => {
     setLoading(true);
     try {
       if (isGlobal || slot === 'global') {
-        // Fetch from global_ads
         const { data } = await supabase
           .from('global_ads')
-          .select('id, title, title_hi, description, description_hi, image_url, link_url, click_count')
+          .select('id, title, title_hi, description, description_hi, image_url, link_url, click_count, view_count, ad_type, position, size')
           .eq('is_active', true)
           .eq('show_on_all_pages', true)
           .order('sort_order')
           .limit(2);
         setAds((data as CategoryAd[]) || []);
       } else {
-        // Fetch from category_ads
         let query = supabase
           .from('category_ads')
-          .select('id, title, title_hi, description, description_hi, image_url, link_url, click_count')
+          .select('id, title, title_hi, description, description_hi, image_url, link_url, click_count, view_count, ad_type, position, size')
           .eq('is_active', true)
           .eq('slot', slot);
 
@@ -94,12 +111,13 @@ export default function AdBanner({
         const { data } = await query.order('sort_order').limit(1);
         setAds((data as CategoryAd[]) || []);
 
-        // Track view
+        // Track view — increment view_count (was incorrectly using click_count)
         if (data && data.length > 0) {
+          const ad = data[0] as CategoryAd;
           await supabase
             .from('category_ads')
-            .update({ view_count: data[0].click_count + 1 })
-            .eq('id', data[0].id);
+            .update({ view_count: (ad.view_count || 0) + 1 })
+            .eq('id', ad.id);
         }
       }
     } catch (e) {
@@ -111,7 +129,8 @@ export default function AdBanner({
   const handleClick = async (adId: string, linkUrl: string | null, table: string) => {
     if (!linkUrl) return;
     try {
-      await supabase.from(table).update({ click_count: (ads.find(a => a.id === adId)?.click_count || 0) + 1 }).eq('id', adId);
+      const ad = ads.find(a => a.id === adId);
+      await supabase.from(table).update({ click_count: (ad?.click_count || 0) + 1 }).eq('id', adId);
     } catch {}
     window.open(linkUrl, '_blank', 'noopener,noreferrer');
   };
@@ -120,13 +139,16 @@ export default function AdBanner({
 
   if (loading) return null;
 
+  // Determine display size: explicit prop > ad data > slot-based default
+  const effectiveSize: AdSize = size || (ads[0]?.size as AdSize) || (isSidebar(slot, adType) ? 'sidebar' : 'leaderboard');
+  const dims = sizeDimensions[effectiveSize] || sizeDimensions.leaderboard;
+
   if (ads.length === 0) {
     if (!showGoogleFallback) return null;
-    // Google AdSense placeholder
     return (
       <div className={`flex flex-col items-center gap-1 ${className}`}>
         <span className="text-[9px] font-medium uppercase tracking-widest text-[#BBBBBB] font-body">Advertisement</span>
-        <div className={`ad-placeholder flex items-center justify-center text-center bg-[#F8F8F8] border border-[#E8E8E8] ${isSidebar(slot) ? 'w-[300px] h-[250px]' : 'w-full h-[90px]'}`} style={{ maxWidth: '100%' }}>
+        <div className={`ad-placeholder flex items-center justify-center text-center bg-[#F8F8F8] border border-[#E8E8E8] ${dims.w} ${dims.h}`} style={{ maxWidth: '100%' }}>
           <div>
             <div className="text-[11px] text-[#CCCCCC] font-body mb-1">Google AdSense</div>
             {googleSlot && <div className="text-[9px] text-[#DDD] font-body">Slot: {googleSlot}</div>}
@@ -143,7 +165,7 @@ export default function AdBanner({
         <div
           key={ad.id}
           onClick={() => handleClick(ad.id, ad.link_url, tableName)}
-          className={`relative overflow-hidden cursor-pointer group border border-[#E8E8E8] hover:border-brand transition-all hover:shadow-md ${isSidebar(slot) ? 'w-[300px] h-[250px]' : 'w-full h-[90px]'}`}
+          className={`relative overflow-hidden cursor-pointer group border border-[#E8E8E8] hover:border-brand transition-all hover:shadow-md ${dims.w} ${dims.h}`}
           style={{ maxWidth: '100%' }}
         >
           {ad.image_url ? (

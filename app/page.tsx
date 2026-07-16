@@ -97,7 +97,7 @@ export default function HomePage() {
         .select('id,slug,title,title_hi,excerpt,excerpt_hi,image_url,category,subcategory,subcategory_hi,author,published_at,read_count,like_count,share_count,featured,trending')
         .eq('is_published', true)
         .order('read_count', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       // Load latest articles
       const { data: latest } = await supabase
@@ -260,7 +260,7 @@ export default function HomePage() {
             <Link
               key={cat.slug}
               href={`/${cat.slug}`}
-              className="group flex flex-col items-center text-center gap-2 p-4 bg-[#F8F8F8] hover:bg-brand hover:text-white transition-all duration-300 card-hover"
+              className="group flex flex-col items-center text-center gap-2 p-4 bg-[#F8F8F8] hover:bg-brand hover:text-brand transition-all duration-300 card-hover"
             >
               <span className="text-2xl">{cat.icon}</span>
               <span className="text-[11px] font-semibold uppercase tracking-wide font-body leading-tight">{cat.name}</span>
@@ -346,6 +346,11 @@ export default function HomePage() {
                       <span className="text-3xl font-bold text-[#EEEEEE] font-display flex-shrink-0 leading-none">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
+                      <img
+                        src={article.image_url}
+                        alt={article.title}
+                        className="w-20 h-20 object-cover rounded-md flex-shrink-0 group-hover:scale-105 transition-transform duration-300"
+                      />
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-wider text-brand font-body">{article.category}</span>
                         <h3 className="text-sm font-semibold text-[#111] group-hover:text-brand transition-colors leading-snug mt-0.5 font-body line-clamp-2">
@@ -360,6 +365,9 @@ export default function HomePage() {
                 </div>
 
                 {/* Mid-sidebar ad */}
+                <div className="mt-8">
+                  <AdBanner slot="home-sidebar" size="rectangle" />
+                </div>
                 <div className="mt-8">
                   <AdBanner slot="home-sidebar" size="rectangle" />
                 </div>

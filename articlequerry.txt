@@ -191,3 +191,59 @@ true,
 ]
 }'::jsonb
 );
+
+give me in this format give me article about catagory dream subcategory=Animals=bull ko dekhna, snake ko dekhna. Nature-rain hona, flood aana, falling from mountain. Elements- burning in fire, foot burn and fall. People-fighting with some other guy, ghost in dreams, seeing god in dream. Objects- sapne me house buy karna, new car buy karna, gold buy karna. Situations- daldal me fasna, pani me dubna, jhatke se girna. fill all colums dont left blank 
+
+
+============================================================================================================
+Here is a detailed breakdown to help you understand exactly how this code works, which database tables it reads from, and how it decides where to show the advertisements.
+
+1. Which Database Tables Is It Picking From?
+This component reads from two completely separate tables in your Supabase database depending 
+on the configuration properties (props) passed to it.
+
+Table A: global_ads
+When is it used? When isGlobal={true} is configured on the component, or when the slot parameter 
+is exactly set to the string 'global'.
+
+What does it fetch? It looks for rows where is_active = true AND show_on_all_pages = true.
+
+Behavior: It sorts them by your custom order (sort_order) and limits the display to a 
+maximum of 2 ads stacked vertically.
+
+Table B: category_ads
+When is it used? This is the default path. It is used whenever isGlobal is false and the 
+slot is a standard name (like 'banner-1', 'rectangle', etc.).
+
+What does it fetch? It matches entries matching the layout slot (slot = slot) and rows that are 
+active (is_active = true).
+Targeting Logic: It checks the category you pass into the component. It maps that category into a column filter (e.g., passing category="health" makes it filter by the database column target_health = true). If no matching category row is found, it falls back to looking for rows marked target_all_categories = true.
+
+Behavior: It fetches a maximum of 1 ad.
+
+2. How Does It Decide Which Page (and Where on the Page) to Show the Ads?
+The location and targeting of an advertisement depend directly on the properties (slot and category) 
+you give to <AdBanner /> when placing it inside your page files (like your DreamsPage or HealthPage).
+
+A. Deciding the Position (Layout Size & Dimensions)
+The component automatically styles itself into two different display styles based on the name given to the slot string property:
+
+Sidebar Layout (isSidebar): If your slot name begins with the phrase "side-image" (e.g., slot="side-image-1"), the ad enforces a strict standard rectangle size box:
+
+Dimensions: Width of 300px and Height of 250px.
+
+Horizontal Banner Layout (isBanner): If your slot name begins with "banner" or is exactly "leaderboard" (e.g., slot="health-top" or slot="banner-1"), it enforces a wide responsive display:
+
+Dimensions: Width of 100% (fluid full layout) and a thin Height of 90px.
+
+B. Deciding Which Page It Belongs To (Context Filtering)
+When you add the component onto a page, you filter it by passing context. For example:
+
+On the Dreams Page: You pass category="dreams". The code dynamically converts this using its mapped keys array to check your database column target_dreams. It will only load an ad if target_dreams is set to true (or if target_all_categories is true) AND the slot name matches exactly.
+
+On the Health Page: You pass category="health". The code tracks the condition column target_health. It ensures only clinical, medical, or wellness ads populate into that layout slot.
+
+3. Google AdSense Fallback Feature
+If your custom database queries return no active rows (ads.length === 0), the code checks your configuration flag showGoogleFallback.
+
+If showGoogleFallback={true}, instead of rendering blank space or disappearing, it automatically falls back to rendering a cleanly styled gray network banner placeholder stating "Google AdSense" along with the specific network unit reference parameter (googleSlot).

@@ -15,7 +15,7 @@ const SUBCATEGORIES_CONFIG = [
   { key: 'Nutrition', en: 'Nutrition & Diet', hi: 'पोषण एवं आहार' },
   { key: 'Diseases', en: 'Diseases & Conditions', hi: 'रोग एवं निदान' },
   { key: 'Mental Health', en: 'Mental Wellness', hi: 'मानसिक स्वास्थ्य' },
-  { key: 'Fitness', en: 'Fitness & Exercise', hi: 'फिटनेस एवं व्यायाम' },
+  { key: 'Fitness', en: 'Fitness & Exercise', hi: 'फिटネス एवं व्यायाम' },
   { key: 'Lifestyle', en: 'Healthy Lifestyle', hi: 'जीवनशैली' },
   { key: 'Ayurveda', en: 'Ayurveda & Home Remedies', hi: 'आयुर्वेद एवं घरेलू उपाय' },
 ];
@@ -38,7 +38,6 @@ export default function HealthPage() {
 
   const [posts, setPosts] = useState<any[]>([]);
   const [dbAds, setDbAds] = useState<AdItem[]>([]);
-  const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [subcatKey, setSubcatKey] = useState('All');
@@ -69,6 +68,7 @@ export default function HealthPage() {
     loadingText: isHi ? 'स्वास्थ्य गाइड लोड हो रही है...' : 'Loading health & medical articles...',
     minRead: isHi ? 'मिनट' : 'min',
     promotedTitle: isHi ? 'प्रमुख स्वास्थ्य गाइड' : 'Featured Medical Articles',
+    sponsor: isHi ? 'प्रायोजित' : 'Sponsor',
   };
 
   // Fetch articles and Database Ads from Supabase
@@ -99,7 +99,8 @@ export default function HealthPage() {
       const { data: adsData, error: adsError } = await supabase
         .from('ads')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .limit(3); // Fetching unique items to distribute across layout banners
 
       if (adsError) console.error('Error fetching ads:', adsError);
       else setDbAds(adsData || []);
@@ -109,15 +110,6 @@ export default function HealthPage() {
 
     fetchData();
   }, [sortBy]);
-
-  // Auto-rotate DB Ads every 8 seconds
-  useEffect(() => {
-    if (dbAds.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentAdIndex((prev) => (prev + 1) % dbAds.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [dbAds]);
 
   // Client-side filtering
   const filtered = useMemo(() => {
@@ -156,8 +148,26 @@ export default function HealthPage() {
   const promotedPosts = pagePosts.slice(17, 19);
   const fourSquarePosts2 = pagePosts.slice(19, 23);
 
-  const activeAd = dbAds[currentAdIndex];
   const defaultHealthImage = 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1200&q=80';
+
+  // Sub-component to cleanly render unique Database Ads without interval rotation
+  const RenderDbAdLayout = ({ ad }: { ad?: AdItem }) => {
+    if (!ad) return null;
+    return (
+      <div className="mb-10 p-3 bg-[#F8F8F8] border border-[#E8E8E8] text-center">
+        <a href={ad.target_url} target="_blank" rel="noopener noreferrer" className="block relative">
+          <span className="absolute top-2 right-2 bg-black/60 text-white text-[9px] uppercase px-1.5 py-0.5 font-body">
+            {t.sponsor}
+          </span>
+          <img
+            src={ad.image_url}
+            alt={ad.title || 'Sponsored Advertisement'}
+            className="w-full max-h-36 object-cover mx-auto"
+          />
+        </a>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -174,7 +184,7 @@ export default function HealthPage() {
       <div className="bg-[#111] text-white py-10">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <span className="tag-pill mb-3 inline-block">{t.badge}</span>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
+          <h1 className="font-display text-white text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
           <p className="text-[#AAA] font-body max-w-2xl mx-auto">{t.pageDesc}</p>
         </div>
       </div>
@@ -307,21 +317,8 @@ export default function HealthPage() {
                   </div>
                 )}
 
-                {/* 2. DATABASE ADS BANNER */}
-                {activeAd && (
-                  <div className="mb-10 p-3 bg-[#F8F8F8] border border-[#E8E8E8] text-center">
-                    <a href={activeAd.target_url} target="_blank" rel="noopener noreferrer" className="block relative">
-                      <span className="absolute top-2 right-2 bg-black/60 text-white text-[9px] uppercase px-1.5 py-0.5 font-body">
-                        Sponsor
-                      </span>
-                      <img
-                        src={activeAd.image_url}
-                        alt={activeAd.title || 'Sponsored Advertisement'}
-                        className="w-full max-h-36 object-cover mx-auto transition-opacity duration-700"
-                      />
-                    </a>
-                  </div>
-                )}
+                {/* 2. DATABASE AD WIDGET 1 (Displays DB Ad Array Index 0) */}
+                <RenderDbAdLayout ad={dbAds[0]} />
 
                 {/* 3. SECTION: 4 Square Posts */}
                 {fourSquarePosts1.length > 0 && (
@@ -370,6 +367,9 @@ export default function HealthPage() {
                   </div>
                 )}
 
+                {/* DATABASE AD WIDGET 2 (Displays DB Ad Array Index 1) */}
+                <RenderDbAdLayout ad={dbAds[1]} />
+
                 {/* 5. SECTION: 2 Posts in a Row (Large Size) */}
                 {twoLargePosts.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 pb-8 border-b border-[#E8E8E8]">
@@ -395,7 +395,7 @@ export default function HealthPage() {
 
                 {/* 6. GOOGLE AD BANNER */}
                 <div className="my-8">
-                  <AdBanner slot="health-infeed" size="leaderboard" />
+                  <AdBanner slot="health-infeed-1" size="leaderboard" />
                 </div>
 
                 {/* 7. SECTION: Promoted Articles */}
@@ -426,6 +426,13 @@ export default function HealthPage() {
                     </div>
                   </div>
                 )}
+
+                {/* DATABASE AD WIDGET 3 (Displays DB Ad Array Index 2) */}
+                <RenderDbAdLayout ad={dbAds[2]} />
+
+                <div className="my-8">
+                  <AdBanner slot="health-infeed-2" size="leaderboard" />
+                </div>
 
                 {/* 8. SECTION: Final 4 Square Posts */}
                 {fourSquarePosts2.length > 0 && (

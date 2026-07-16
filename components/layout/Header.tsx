@@ -86,13 +86,13 @@ export default function Header() {
       {/* Top Social Bar */}
       <div className="social-bar py-2 px-4 hidden md:block">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4 text-[11px] text-gray-400">
+          <div className="flex items-center gap-4 text-[11px] text-gray-100">
             <span>{lang === 'hi' ? 'अनुसरण करें:' : 'Follow us:'}</span>
             {['Facebook', 'Instagram', 'YouTube', 'Twitter'].map((s) => (
               <a key={s} href="#" className="hover:text-white transition-colors">{s}</a>
             ))}
           </div>
-          <div className="text-[11px] text-gray-400">
+          <div className="text-[11px] text-gray-100">
             {lang === 'hi' ? 'स्वस्थ मन • स्वस्थ शरीर • सकारात्मक जीवन' : 'Healthy Mind • Healthy Body • Positive Life'}
           </div>
         </div>
@@ -240,7 +240,7 @@ export default function Header() {
               ) : (
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="px-4 py-2 bg-brand text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#C93D0E] transition-colors font-body"
+                  className="px-4 py-2 bg-green-500 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#C93D0E] transition-colors font-body"
                 >
                   {t('login')}
                 </button>

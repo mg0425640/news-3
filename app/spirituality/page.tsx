@@ -173,7 +173,7 @@ export default function SpiritualityPage() {
       <div className="bg-[#111] text-white py-10">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <span className="tag-pill mb-3 inline-block">{t.badge}</span>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
+          <h1 className="font-display text-white text-3xl  md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
           <p className="text-[#AAA] font-body max-w-2xl mx-auto">{t.pageDesc}</p>
         </div>
       </div>

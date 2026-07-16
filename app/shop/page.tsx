@@ -49,7 +49,7 @@ export default function ShopPage() {
       <div className="bg-[#111] text-white py-10">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <span className="text-3xl mb-3 block">🛒</span>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">Wellness Shop</h1>
+          <h1 className="font-display text-3xl text-white md:text-4xl font-bold mb-3">Wellness Shop</h1>
           <p className="text-[#AAA] font-body max-w-2xl mx-auto">
             Curated Ayurvedic supplements, natural beauty products, yoga accessories, and organic foods — all carefully selected for quality and authenticity.
           </p>

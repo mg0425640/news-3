@@ -1,110 +1,75 @@
-import Link from 'next/link';
+'use client';
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import ArticleCard from '@/components/articles/ArticleCard';
 import AdBanner from '@/components/ads/AdBanner';
-import Sidebar from '@/components/layout/Sidebar';
-import { featuredArticles } from '@/lib/data';
 
-export const metadata = {
-  title: 'Blog – Wellness, Ayurveda & Natural Health',
-  description: 'Read the latest articles on wellness, Ayurveda, yoga, dream meanings, beauty, and natural health.',
-};
-
-const blogCategories = ['All', 'Ayurveda', 'Health & Wellness', 'Yoga & Meditation', 'Beauty', 'Dream Meanings', 'Nutrition', 'Spirituality', 'Home Remedies'];
+const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 export default function BlogPage() {
-  const featured = featuredArticles[0];
-  const articles = featuredArticles;
+  const [hero, setHero] = useState<any>(null);
+  const [sideList, setSideList] = useState<any[]>([]);
+  const [latest, setLatest] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Fetch Hero, Side List, and Latest Grid
+    sb.from('articles').select('*').eq('featured', true).limit(1).maybeSingle().then(({data}) => setHero(data));
+    sb.from('articles').select('*').limit(4).then(({data}) => setSideList(data || []));
+    sb.from('articles').select('*').order('created_at', {ascending: false}).limit(6).then(({data}) => setLatest(data || []));
+    loadMoreStories(); // Initial load for "More Stories"
+  }, []);
+
+  const loadMoreStories = async () => {
+    setLoading(true);
+    const { data } = await sb.from('articles')
+      .select('*')
+      .order('created_at', {ascending: false})
+      .range(page * 10, (page + 1) * 10 - 1);
+    
+    if (data) {
+      setStories(prev => [...prev, ...data]);
+      setPage(prev => prev + 1);
+    }
+    setLoading(false);
+  };
 
   return (
-    <>
-      <div className="bg-[#F8F8F8] border-b border-[#E8E8E8] py-3">
-        <div className="max-w-7xl mx-auto px-4 text-xs font-body text-[#999]">
-          <Link href="/" className="hover:text-brand">Home</Link>
-          <span className="mx-2">›</span>
-          <span className="text-[#111]">Blog</span>
+    <main className="max-w-7xl mx-auto px-4 py-8">
+      {/* Hero Section */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="lg:col-span-2">
+          {hero && <ArticleCard article={hero} variant="featured" />}
         </div>
-      </div>
-
-      <div className="bg-[#111] text-white py-10">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">VedaWell Blog</h1>
-          <p className="text-[#AAA] font-body max-w-2xl mx-auto">
-            Expert articles on wellness, Ayurveda, yoga, dream interpretation, beauty, and natural health. Researched, trusted, practical.
-          </p>
+        <div className="flex flex-col gap-4">
+          {sideList.map(a => <ArticleCard key={a.id} article={a} variant="mini" />)}
         </div>
-      </div>
+      </section>
+      <AdBanner />
 
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <AdBanner slot="blog-top" size="leaderboard" />
-      </div>
-
-      {/* Category Filter Tabs */}
-      <div className="border-b border-[#E8E8E8] sticky top-16 bg-white z-30">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto gap-0 -mb-px scrollbar-hide">
-            {blogCategories.map((cat, i) => (
-              <button
-                key={cat}
-                className={`flex-shrink-0 px-5 py-4 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all font-body ${
-                  i === 0 ? 'border-brand text-brand' : 'border-transparent text-[#999] hover:text-[#111]'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+      {/* Latest Grid */}
+      <section className="mb-12">
+        <h2 className="text-sm font-bold uppercase tracking-widest mb-6">Latest Articles</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {latest.map(a => <ArticleCard key={a.id} article={a} />)}
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-10">
-          <div className="flex-1 min-w-0">
-            {/* Featured Article */}
-            <div className="mb-8">
-              <div className="divider-title">
-                <h2 className="text-sm font-bold uppercase tracking-widest">Featured</h2>
-              </div>
-              <ArticleCard article={featured} variant="featured" />
-            </div>
+      <AdBanner />
+      <AdBanner />
 
-            <AdBanner slot="blog-infeed-1" size="leaderboard" className="mb-8" />
-
-            {/* 2-column grid */}
-            <div className="divider-title">
-              <h2 className="text-sm font-bold uppercase tracking-widest">Latest Articles</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-              {articles.slice(1, 7).map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
-
-            <AdBanner slot="blog-infeed-2" size="leaderboard" className="mb-8" />
-
-            {/* Horizontal list */}
-            <div className="divider-title">
-              <h2 className="text-sm font-bold uppercase tracking-widest">More Stories</h2>
-            </div>
-            <div className="space-y-5 mb-8">
-              {articles.slice(7, 12).map((article) => (
-                <ArticleCard key={article.id} article={article} variant="horizontal" />
-              ))}
-            </div>
-
-            <div className="text-center mt-4">
-              <button className="btn-outline">Load More Stories</button>
-            </div>
-          </div>
-
-          <div className="lg:w-80 flex-shrink-0">
-            <div className="sticky-sidebar"><Sidebar /></div>
-          </div>
+      {/* More Stories */}
+      <section>
+        <h2 className="text-sm font-bold uppercase tracking-widest mb-6">More Stories</h2>
+        <div className="space-y-6">
+          {stories.map(a => <ArticleCard key={a.id} article={a} variant="horizontal" />)}
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-8">
-        <AdBanner slot="blog-bottom" size="leaderboard" />
-      </div>
-    </>
+        <button onClick={loadMoreStories} disabled={loading} className="btn-outline mt-8 w-full">
+          {loading ? 'Loading...' : 'Load More Stories'}
+        </button>
+      </section>
+    </main>
   );
 }

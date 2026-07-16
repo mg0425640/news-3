@@ -175,7 +175,7 @@ export default function BeautyPageClient() {
       <div className="bg-[#111] text-white py-10">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <span className="tag-pill mb-3 inline-block">{t.badge}</span>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
+          <h1 className="font-display text-white text-3xl md:text-4xl font-bold mb-3">{t.pageTitle}</h1>
           <p className="text-[#AAA] font-body max-w-2xl mx-auto">{t.pageDesc}</p>
         </div>
       </div>
@@ -298,6 +298,9 @@ export default function BeautyPageClient() {
                             <h3 className="text-xs font-semibold font-body text-[#111] group-hover:text-brand line-clamp-2">
                               {isHi && post.title_hi ? post.title_hi : post.title}
                             </h3>
+                            <p className="text-sm text-[#666] font-body line-clamp-3 mt-2">
+                              {isHi && post.excerpt_hi ? post.excerpt_hi : post.excerpt}
+                            </p>
                             <span className="text-[10px] text-[#999] flex items-center gap-1 mt-1 font-body">
                               <Clock size={10} /> {post.read_time || 5} {t.minRead}
                             </span>
@@ -323,11 +326,24 @@ export default function BeautyPageClient() {
                     </a>
                   </div>
                 )}
+                <AdBanner slot="beauty-infeed" size="leaderboard" className="mb-10" />
+                {dbAds.length > 1 && (
+                  <div className="flex items-center justify-center gap-2 mb-10">
+                    {dbAds.map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          idx === currentAdIndex ? 'bg-brand' : 'bg-[#CCC]'
+                        }`}
+                      ></span>
+                    ))}
+                  </div>
+                )}
 
                 {/* 3. SECTION: 4 Square Posts */}
                 {fourSquarePosts1.length > 0 && (
-                  <div className="mb-10 pb-8 border-b border-[#E8E8E8]">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="mb-10 pb-8 border-b border-[#E8E8E8] ">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 ">
                       {fourSquarePosts1.map((post) => (
                         <Link key={post.id} href={`/beauty/${post.slug}${isHi ? '?lang=hi' : ''}`} className="group block">
                           <div className="aspect-square overflow-hidden mb-2 relative">
@@ -337,9 +353,17 @@ export default function BeautyPageClient() {
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           </div>
-                          <h3 className="text-xs font-semibold font-body text-[#111] group-hover:text-brand line-clamp-2">
-                            {isHi && post.title_hi ? post.title_hi : post.title}
-                          </h3>
+                          <div>
+                            <h3 className="text-xs font-semibold font-body text-[#111] group-hover:text-brand line-clamp-2">
+                              {isHi && post.title_hi ? post.title_hi : post.title}
+                            </h3>
+                            <span className="text-[10px] text-[#999] flex items-center gap-1 mt-1 font-body">
+                              <Clock size={10} /> {post.read_time || 5} {t.minRead}
+                            </span>
+                            <p className="text-sm text-[#666] font-body line-clamp-3 mt-2">
+                              {isHi && post.excerpt_hi ? post.excerpt_hi : post.excerpt}
+                            </p>
+                          </div>
                         </Link>
                       ))}
                     </div>

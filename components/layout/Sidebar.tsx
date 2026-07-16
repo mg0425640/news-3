@@ -144,6 +144,10 @@ export default function Sidebar() {
   return (
     <aside className="w-full space-y-6">
 
+      {dbAds.length > 0 && (
+        <RenderDbAd ad={dbAds[0]} />
+      )}
+
       {/* 1. SOCIAL MEDIA WIDGET */}
       <div className="grid grid-cols-3 gap-1 bg-[#FAF9F9] p-3 text-center border border-[#F0F0F0]">
         <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center py-3 hover:bg-white transition-colors">
@@ -165,8 +169,7 @@ export default function Sidebar() {
         </a>
       </div>
 
-      {/* 🟢 DB AD 1: AFTER SOCIAL MEDIA */}
-      <RenderDbAd ad={dbAds[0]} />
+      {/* 🟢 DB AD 1: AFTER SOCIAL MEDIA (rendered above conditionally) */}
 
       {/* 2. LATEST STORIES WIDGET */}
       <div className="bg-[#FAF9F9] p-6 border border-[#F0F0F0]">

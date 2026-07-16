@@ -97,7 +97,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold font-display">{t.newsletterTitle}</h3>
-            <p className="text-[#999] text-sm mt-0.5">{t.newsletterDesc}</p>
+            <p className="text-white text-sm mt-0.5">{t.newsletterDesc}</p>
           </div>
           {subscribed ? (
             <p className="text-green-400 font-medium text-sm">{t.thankYou}</p>
@@ -133,8 +133,8 @@ export default function Footer() {
                 Veda<span className="text-brand">Well</span>
               </span>
             </Link>
-            <p className="text-[#777] text-sm leading-relaxed mb-4">{t.brandDesc}</p>
-            <div className="flex items-center gap-3">
+            <p className="text-white text-sm leading-relaxed mb-4">{t.brandDesc}</p>
+            <div className="flex items-center gap-3 text-white hover:text-brand transition-colors">
               {[
                 { Icon: Facebook, href: '#' },
                 { Icon: Instagram, href: '#' },
@@ -154,7 +154,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {categoriesList.map((cat) => (
                 <li key={cat.slug}>
-                  <Link href={`/${cat.slug}`} className="text-[#777] hover:text-white text-sm transition-colors">
+                  <Link href={`/${cat.slug}`} className="text-white hover:text-brand text-sm transition-colors">
                     {lang === 'hi' ? cat.hi : cat.en}
                   </Link>
                 </li>
@@ -168,7 +168,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {quickLinks.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="text-[#777] hover:text-white text-sm transition-colors">
+                  <Link href={item.href} className="text-white hover:text-brand text-sm transition-colors">
                     {item.label}
                   </Link>
                 </li>
@@ -182,7 +182,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {shopItems.map((item) => (
                 <li key={item.en}>
-                  <Link href={`/shop?cat=${item.en.toLowerCase().replace(/ /g, '-')}`} className="text-[#777] hover:text-white text-sm transition-colors">
+                  <Link href={`/shop?cat=${item.en.toLowerCase().replace(/ /g, '-')}`} className="text-white hover:text-brand text-sm transition-colors">
                     {lang === 'hi' ? item.hi : item.en}
                   </Link>
                 </li>
@@ -196,7 +196,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {trendingItems.map((item) => (
                 <li key={item.en}>
-                  <Link href={item.href} className="text-[#777] hover:text-white text-sm transition-colors">
+                  <Link href={item.href} className="text-white hover:text-brand text-sm transition-colors">
                     {lang === 'hi' ? item.hi : item.en}
                   </Link>
                 </li>
